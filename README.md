@@ -139,6 +139,10 @@ dist\证件照换底色.exe
 - 建议不要把包含身份证号、住址或其他敏感信息的原图提交到公开仓库
 - 仓库中的模型文件用于离线推理，具体许可和来源见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
 
+## 社区
+
+[LINUX DO社区](https://linux.do/)
+
 ## 许可
 
 本项目使用 MIT License，详见 [LICENSE](LICENSE)。第三方模型、库和图标按照各自上游许可使用，详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
