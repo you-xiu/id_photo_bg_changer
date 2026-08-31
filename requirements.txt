@@ -1,0 +1,4 @@
+Pillow>=10.0
+numpy>=1.24
+opencv-python>=4.10
+PyInstaller>=6.0

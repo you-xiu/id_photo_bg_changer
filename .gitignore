@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+.Python
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Build artifacts
+build/
+dist/
+*.spec.bak
+*.debug.spec
+IdPhotoBgChangerDir.spec
+_MEI*/
+tcl_probe/
+
+# Local test assets and generated output
+qa_detail/
+gc48.png
+*.tmp
+*.log
+
+# Editors and OS files
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+Desktop.ini
+
+# Local environment files
+.env
+.env.*
