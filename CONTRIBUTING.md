@@ -15,7 +15,8 @@ python -m pip install -r requirements.txt
 ## 提交前检查
 
 ```powershell
-python -m compileall -q pictone cli.py id_photo_bg_changer.py
+python -m unittest discover -s tests -v
+python -m compileall -q pictone tests cli.py id_photo_bg_changer.py
 ```
 
 如果修改了打包配置，请在 Windows 上执行一次 PyInstaller 构建，并确认 `python -c "import tkinter"` 通过，且 `dist\证件照换底色.exe` 可以启动。
