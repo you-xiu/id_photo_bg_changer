@@ -9,13 +9,15 @@ class PhotoSize:
     label: str
     width: int
     height: int
+    width_mm: int
+    height_mm: int
 
 
 PHOTO_SIZES = {
-    "one": PhotoSize("one", "一寸  295 x 413", 295, 413),
-    "two": PhotoSize("two", "二寸  413 x 579", 413, 579),
-    "small_one": PhotoSize("small_one", "小一寸  260 x 378", 260, 378),
-    "small_two": PhotoSize("small_two", "小二寸  390 x 567", 390, 567),
+    "one": PhotoSize("one", "一寸  295 x 413", 295, 413, 25, 35),
+    "two": PhotoSize("two", "二寸  413 x 579", 413, 579, 35, 49),
+    "small_one": PhotoSize("small_one", "小一寸  260 x 378", 260, 378, 22, 32),
+    "small_two": PhotoSize("small_two", "小二寸  390 x 567", 390, 567, 33, 48),
 }
 
 

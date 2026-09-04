@@ -78,7 +78,7 @@ def detect_faces(rgb: np.ndarray) -> list[FaceDetection]:
     return sorted(found, key=lambda item: item.score, reverse=True)
 
 
-def suggest_layout(rgb: np.ndarray, target_aspect: float) -> Optional[dict]:
+def suggest_layout(rgb: np.ndarray, target_aspect: float, matte=None) -> Optional[dict]:
     faces = detect_faces(rgb)
     if not faces:
         return None
@@ -86,21 +86,69 @@ def suggest_layout(rgb: np.ndarray, target_aspect: float) -> Optional[dict]:
     height, width = rgb.shape[:2]
     x, y, face_width, face_height = face.box
     face_center_x, face_center_y = face.center
-    desired_face_width = width * 0.39
-    zoom = int(np.clip(desired_face_width / max(1.0, face_width) * 100.0, 80, 160))
-    crop_height = min(height, round(height / (zoom / 100.0)))
-    crop_width = min(width, round(crop_height * target_aspect))
-    if crop_width > width:
-        crop_width = width
-        crop_height = min(height, round(crop_width / target_aspect))
-    desired_center_x = width / 2
-    desired_center_y = y + face_height * 0.47 + crop_height * 0.18
-    offset_x = int(np.clip((face_center_x - desired_center_x) / max(1, width) * 100, -20, 20))
-    offset_y = int(np.clip((face_center_y - desired_center_y) / max(1, height) * 100, -20, 20))
+
+    # Compute against the actual aspect-ratio crop, not the full source width.
+    # The previous full-width calculation enlarged already well-framed portraits
+    # and cut away the lower shoulders.
+    if width / max(1, height) >= target_aspect:
+        base_crop_height = float(height)
+        base_crop_width = base_crop_height * target_aspect
+    else:
+        base_crop_width = float(width)
+        base_crop_height = base_crop_width / target_aspect
+
+    # A 35% face width keeps the portrait readable while retaining both
+    # shoulders on typical phone photos. Allow a modest canvas extension when
+    # the source is already framed too tightly.
+    desired_face_ratio = 0.35
+    zoom = int(round(desired_face_ratio * base_crop_width / max(1.0, face_width) * 100.0))
+    zoom = int(np.clip(zoom, 90, 145))
+    zoom_ratio = zoom / 100.0
+    crop_width = base_crop_width / zoom_ratio
+    crop_height = base_crop_height / zoom_ratio
+
+    desired_left = face_center_x - crop_width / 2
+    if zoom < 100:
+        left = desired_left
+    else:
+        left = float(np.clip(desired_left, 0, max(0.0, width - crop_width)))
+
+    # YuNet's face box starts below the hairline. Prefer the segmentation mask
+    # for the real crown position, falling back to a conservative face estimate.
+    estimated_crown_y = max(0.0, y - face_height * 0.28)
+    if matte is not None:
+        try:
+            alpha = np.asarray(matte.getchannel("A"), dtype=np.uint8)
+            foreground = alpha > 96
+            rows = np.flatnonzero(foreground.any(axis=1))
+            if rows.size:
+                mask_crown_y = float(rows[0])
+                plausible_limit = y + face_height * 0.12
+                if mask_crown_y <= plausible_limit:
+                    estimated_crown_y = mask_crown_y
+        except (AttributeError, TypeError, ValueError):
+            pass
+    desired_top = estimated_crown_y - crop_height * 0.08
+    if zoom < 100:
+        # Expanded portraits are bottom-anchored by the renderer to prevent an
+        # internal garment cutoff. The added area naturally becomes headroom.
+        top = float(height - crop_height)
+    else:
+        top = float(np.clip(desired_top, 0, max(0.0, height - crop_height)))
+
+    crop_center_x = left + crop_width / 2
+    crop_center_y = top + crop_height / 2
+    offset_x = int(round(np.clip((crop_center_x - width / 2) / max(1, width) * 100, -20, 20)))
+    offset_y = 0 if zoom < 100 else int(round(np.clip((crop_center_y - height / 2) / max(1, height) * 100, -20, 20)))
+    rotation = 0.0 if abs(face.eye_tilt) < 3.0 else float(np.clip(face.eye_tilt * 1.4, -5, 5))
     return {
         "faces": faces,
         "zoom": zoom,
         "offset_x": offset_x,
         "offset_y": offset_y,
-        "rotation": float(np.clip(-face.eye_tilt, -12, 12)),
+        # PIL rotates counter-clockwise in image coordinates; using the detected
+        # signed tilt levels the eye line. Negating it made the tilt worse.
+        "rotation": rotation,
+        "face_ratio": face_width / max(1.0, crop_width),
+        "headroom": (estimated_crown_y - top) / max(1.0, crop_height),
     }

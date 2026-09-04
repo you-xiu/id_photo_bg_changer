@@ -214,23 +214,86 @@ def render_matte_preview(matte: Image.Image, target_size=None) -> Image.Image:
     return board.convert("RGB")
 
 
-def _crop_box(size: Tuple[int, int], target: Tuple[int, int], zoom: int, offset_x: int, offset_y: int):
+def composition_crop_box(
+    size: Tuple[int, int],
+    target: Tuple[int, int],
+    zoom: int,
+    offset_x: int,
+    offset_y: int,
+):
+    """Return the source-space box used by every composition workflow.
+
+    Zoom values below 100 intentionally extend the canvas. The lower edge is
+    anchored to the source so portraits that touch the bottom never acquire a
+    visible horizontal cut inside the finished photo.
+    """
     width, height = size
     target_w, target_h = target
     aspect = target_w / target_h
-    zoom = max(60, min(180, int(zoom))) / 100
-    crop_h = min(height, round(height / zoom))
-    crop_w = min(width, round(crop_h * aspect))
-    if crop_w > width:
-        crop_w = width
-        crop_h = min(height, round(crop_w / aspect))
+    zoom_ratio = max(0.6, min(1.8, float(zoom) / 100.0))
+
+    if width / max(1, height) >= aspect:
+        base_crop_h = float(height)
+        base_crop_w = base_crop_h * aspect
+    else:
+        base_crop_w = float(width)
+        base_crop_h = base_crop_w / aspect
+    crop_w = max(1, int(round(base_crop_w / zoom_ratio)))
+    crop_h = max(1, int(round(base_crop_h / zoom_ratio)))
+
     center_x = width / 2 + (offset_x / 100) * width
-    center_y = height / 2 + (offset_y / 100) * height
     left = int(round(center_x - crop_w / 2))
-    top = int(round(center_y - crop_h / 2))
-    left = max(0, min(width - crop_w, left))
-    top = max(0, min(height - crop_h, top))
+    if zoom_ratio < 1.0:
+        # Keep the garment boundary on the final lower edge. Horizontal
+        # movement remains available, while vertical movement can only crop
+        # farther into the source and never expose empty space below it.
+        top = int(round(height - crop_h + min(0, offset_y) / 100 * height))
+    else:
+        center_y = height / 2 + (offset_y / 100) * height
+        top = int(round(center_y - crop_h / 2))
+        left = max(0, min(width - crop_w, left))
+        top = max(0, min(height - crop_h, top))
     return left, top, left + crop_w, top + crop_h
+
+
+# Kept as an internal alias for callers from older project versions.
+_crop_box = composition_crop_box
+
+
+def _crop_with_fill(image: Image.Image, box, fill) -> Image.Image:
+    left, top, right, bottom = box
+    output = Image.new(image.mode, (right - left, bottom - top), fill)
+    source_box = (
+        max(0, left),
+        max(0, top),
+        min(image.width, right),
+        min(image.height, bottom),
+    )
+    if source_box[2] > source_box[0] and source_box[3] > source_box[1]:
+        output.paste(image.crop(source_box), (source_box[0] - left, source_box[1] - top))
+    return output
+
+
+def _crop_with_edge_extension(image: Image.Image, box) -> Image.Image:
+    """Crop beyond the source by repeating its outermost pixels."""
+    left, top, right, bottom = box
+    pad_left = max(0, -left)
+    pad_top = max(0, -top)
+    pad_right = max(0, right - image.width)
+    pad_bottom = max(0, bottom - image.height)
+    pixels = np.asarray(image)
+    extended = np.pad(
+        pixels,
+        ((pad_top, pad_bottom), (pad_left, pad_right), (0, 0)),
+        mode="edge",
+    )
+    adjusted = (
+        left + pad_left,
+        top + pad_top,
+        right + pad_left,
+        bottom + pad_top,
+    )
+    return Image.fromarray(extended, image.mode).crop(adjusted)
 
 
 def render_cutout(image: Image.Image, settings: ProcessingSettings, matte: Image.Image = None) -> Image.Image:
@@ -251,7 +314,7 @@ def render_cutout(image: Image.Image, settings: ProcessingSettings, matte: Image
         )
     target = PHOTO_SIZES[settings.size_key]
     crop_box = _crop_box(working.size, (target.width, target.height), settings.zoom, settings.offset_x, settings.offset_y)
-    cropped = working.crop(crop_box)
+    cropped = _crop_with_fill(working, crop_box, (0, 0, 0, 0))
     output = cropped.resize((target.width, target.height), Image.Resampling.LANCZOS)
     pixels = np.asarray(output, dtype=np.float32).copy()
     alpha = pixels[:, :, 3:4] / 255.0
@@ -308,7 +371,14 @@ def render_photo(image: Image.Image, settings: ProcessingSettings, matte: Image.
     source = prepare_image(image)
     target = PHOTO_SIZES[settings.size_key]
     if original:
-        cropped = source.crop(_crop_box(source.size, (target.width, target.height), settings.zoom, settings.offset_x, settings.offset_y))
+        crop_box = composition_crop_box(
+            source.size,
+            (target.width, target.height),
+            settings.zoom,
+            settings.offset_x,
+            settings.offset_y,
+        )
+        cropped = _crop_with_edge_extension(source, crop_box)
         return cropped.resize((target.width, target.height), Image.Resampling.LANCZOS)
     cutout = render_cutout(source, settings, matte)
     background = Image.new("RGBA", cutout.size, hex_to_rgb(settings.background) + (255,))

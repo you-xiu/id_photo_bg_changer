@@ -55,14 +55,15 @@ def inspect_photo(source: Image.Image, matte: Image.Image = None, target_size=No
         x, y, face_width, face_height = face.box
         ratio = face_width / width
         centered = abs(face.center[0] - width / 2) / width < 0.12
-        size_ok = 0.20 <= ratio <= 0.60
+        size_ok = 0.26 <= ratio <= 0.42
         tilt_ok = abs(face.eye_tilt) <= 5
         items.append(QualityItem("人脸位置", "居中" if centered else "偏移", centered, "可用水平位置微调"))
-        items.append(QualityItem("人脸比例", f"{ratio:.0%}", size_ok, "建议人脸宽度约占画面 20% 至 60%"))
+        items.append(QualityItem("人脸比例", f"{ratio:.0%}", size_ok, "建议人脸宽度约占成片 26% 至 42%"))
         items.append(QualityItem("眼线水平", f"{face.eye_tilt:+.1f}°", tilt_ok, "可使用自动构图或旋转修正"))
         headroom = y / height
         items.append(QualityItem("头顶留白", f"{headroom:.0%}", headroom >= 0.03, "头顶不宜贴近上边缘"))
-    items.append(QualityItem("清晰度", f"{_blur_score(image):.0f}", _blur_score(image) >= 30, "原图过度模糊会影响抠图和打印"))
+    blur_score = _blur_score(image)
+    items.append(QualityItem("清晰度", f"{blur_score:.0f}", blur_score >= 30, "原图过度模糊会影响抠图和打印"))
     brightness = float(rgb.mean())
     items.append(QualityItem("曝光", f"{brightness:.0f}/255", 35 <= brightness <= 225, "避免整体过暗或过曝"))
     if matte is not None:
