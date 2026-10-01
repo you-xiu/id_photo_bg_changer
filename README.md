@@ -6,6 +6,9 @@
 
 完整项目文档见 [docs/README.md](docs/README.md)，包括用户指南、系统架构、EXE 打包、开发、测试和常见问题。
 
+## 最新版V2.0.0 实现自定义背景更换
+[效果图](https://img.baidu.re/i/2026/10/siqddm.jpg
+)
 ## 功能亮点
 
 - MODNet 人像抠图，先生成透明人物蒙版，再进行背景合成
