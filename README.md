@@ -32,6 +32,7 @@
 ## 下载成品
 
 Windows 用户可以从 [Releases](../../releases/latest) 下载单文件版：
+网盘下载最新版[证件照](https://pan.quark.cn/s/9b4ce1c901ba)
 
 ```text
 证件照换底色.exe
