@@ -32,7 +32,7 @@
 ## 下载成品
 
 Windows 用户可以从 [Releases](../../releases/latest) 下载单文件版：
-网盘下载最新版[证件照](https://pan.quark.cn/s/9b4ce1c901ba)
+网盘下载最新版[夸克网盘](https://pan.quark.cn/s/9b4ce1c901ba)
 
 ```text
 证件照换底色.exe
@@ -131,6 +131,8 @@ dist\证件照换底色.exe
 - [开发指南](docs/DEVELOPMENT.md)
 - [测试与验收](docs/TESTING.md)
 - [常见问题](docs/FAQ.md)
+## 社区
+[LINUX DO](https://linux.do/)
 
 ## 技术栈
 
