@@ -36,9 +36,16 @@ Windows 用户可以从 [Releases](../../releases/latest) 下载单文件版：
 网盘下载最新版
 
 [照片焕彩v2.0.0](https://pan.quark.cn/s/9b4ce1c901ba)
+
+
 ![效果图](https://img.baidu.re/i/2026/10/siqddm.jpg
 )
+
+
+
 [证件照焕彩_v3.4.0](https://pan.quark.cn/s/263b3a8a22e0)
+
+
 ![效果图](https://img.baidu.re/i/2026/10/10r3ily.png
 )
 
