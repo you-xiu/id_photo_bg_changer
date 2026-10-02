@@ -6,10 +6,6 @@
 
 完整项目文档见 [docs/README.md](docs/README.md)，包括用户指南、系统架构、EXE 打包、开发、测试和常见问题。
 
-## 最新版V2.0.0 实现自定义背景更换
-
-[效果图](https://img.baidu.re/i/2026/10/siqddm.jpg
-)
 
 ## 功能亮点
 
@@ -40,13 +36,11 @@ Windows 用户可以从 [Releases](../../releases/latest) 下载单文件版：
 网盘下载最新版
 
 [照片焕彩v2.0.0](https://pan.quark.cn/s/9b4ce1c901ba)
-
+![效果图](https://img.baidu.re/i/2026/10/siqddm.jpg
+)
 [证件照焕彩_v3.4.0](https://pan.quark.cn/s/263b3a8a22e0)
-
-
-```text
-证件照换底色.exe
-```
+![效果图](https://img.baidu.re/i/2026/10/10r3ily.png
+)
 
 成品已包含 Python 运行库、Tk 运行库、AI 模型和软件图标，不需要额外安装 Python，也不需要旁边放置模型文件或资源文件。
 
